@@ -705,6 +705,11 @@ class Comment extends DataObject
             return false;
         }
 
+        $parent = $this->getParent();
+        if ($parent->CloseComments) {
+            return false;
+        }
+
         // Check if depth is limited
         $maxLevel = $this->getOption('nested_depth');
         $notSpam = ($this->SpamClass() == 'notspam');

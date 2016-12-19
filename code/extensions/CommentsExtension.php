@@ -71,6 +71,7 @@ class CommentsExtension extends DataExtension
      */
     private static $db = array(
         'ProvideComments' => 'Boolean',
+        'CloseComments' => 'Boolean',
         'ModerationRequired' => 'Enum(\'None,Required,NonMembersOnly\',\'None\')',
         'CommentsRequireLogin' => 'Boolean',
     );
@@ -126,6 +127,7 @@ class CommentsExtension extends DataExtension
         // Check if enabled setting should be cms configurable
         if ($this->owner->getCommentsOption('enabled_cms')) {
             $options->push(new CheckboxField('ProvideComments', _t('Comment.ALLOWCOMMENTS', 'Allow Comments')));
+            $options->push(new CheckboxField('CloseComments', _t('Comment.CLOSECOMMENTS', 'Close Comments')));
         }
 
         // Check if we should require users to login to comment
@@ -314,6 +316,16 @@ class CommentsExtension extends DataExtension
     }
 
     /**
+     * Determine if submission of new comments is closed (even if comments are enabled)
+     *
+     * @return boolean
+     */
+    public function getCommentsClosed()
+    {
+        return !!$this->owner->CloseComments;
+    }
+
+    /**
      * Get the HTML ID for the comment holder in the template
      *
      * @return string
@@ -359,6 +371,10 @@ class CommentsExtension extends DataExtension
     {
         // Deny if not enabled for this object
         if (!$this->owner->CommentsEnabled) {
+            return false;
+        }
+
+        if ($this->owner->CommentsClosed) {
             return false;
         }
 
@@ -450,6 +466,8 @@ class CommentsExtension extends DataExtension
     {
         // Check if enabled
         $enabled = $this->getCommentsEnabled();
+        $closed  = $this->getCommentsClosed();
+
         if ($enabled && $this->owner->getCommentsOption('include_js')) {
             Requirements::javascript(THIRDPARTY_DIR . '/jquery/jquery.js');
             Requirements::javascript(THIRDPARTY_DIR . '/jquery-entwine/dist/jquery.entwine-dist.js');
@@ -467,7 +485,7 @@ class CommentsExtension extends DataExtension
         $moderatedSubmitted = Session::get('CommentsModerated');
         Session::clear('CommentsModerated');
 
-        $form = ($enabled) ? $controller->CommentsForm() : false;
+        $form = ($enabled && !$closed) ? $controller->CommentsForm() : false;
 
         // a little bit all over the show but to ensure a slightly easier upgrade for users
         // return back the same variables as previously done in comments
