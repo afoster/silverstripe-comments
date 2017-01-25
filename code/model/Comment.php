@@ -164,10 +164,10 @@ class Comment extends DataObject
     {
         if ($parent = $this->getParent()) {
             $link = $parent->Link($action) . '#' . $this->Permalink();            
-            $link = $this->extend('updateLink', $link);
+            $updated_link = $this->extend('updateLink', $link);
 
-            if (is_array($link)) {
-                return $link[0];
+            if (is_array($updated_link) and sizeof($updated_link) > 0) {
+                return $updated_link[0];
             } else {
                 return $link;
             }
